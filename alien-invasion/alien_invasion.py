@@ -24,9 +24,12 @@ class AlienInvasion:
     # helper function只是为了将复杂的函数拆分重构，不是对外开放的方法，类似C++的static inline函数
     def _check_events(self):
         for event in pygame.event.get(): #获取从上次get()到本次get()之间发生的所有事件，事件包括用户的按键，鼠标等操作
-                if event.type == pygame.QUIT:
-                    sys.exit()
-    
+            if event.type == pygame.QUIT: #退出按钮
+                sys.exit()
+            elif event.type == pygame.KEYDOWN: #键盘按键
+                if event.key == pygame.K_RIGHT: #键盘的方向键右键
+                    self.ship.rect.x += 1 #ship的矩形坐标右移
+            
     def _update_screen(self):
         self.screen.fill(self.settings.bg_color) #填充颜色到surface类型的screen对象
         self.ship.blitme() #绘制ship
