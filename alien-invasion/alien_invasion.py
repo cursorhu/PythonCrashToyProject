@@ -18,6 +18,7 @@ class AlienInvasion:
     def run_game(self): #枚举的event检测去对surface对象刷新重绘或退出
         while True: #持续监听事件并处理
             self._check_events() #注意python的self是显式的，所以在类内调用方法也必须用self去调用，这一点和C++的隐式this支持直接调用类内方法不同
+            self.ship.update() #根据ship的移动状态更新ship位置
             self._update_screen() #注意self.的调用方式已经隐式地将self传参到_check_events(), _update_screen()，不需要再显式传入self
             
     # 类内部的helper function通常加前缀下划线命名
@@ -26,10 +27,17 @@ class AlienInvasion:
         for event in pygame.event.get(): #获取从上次get()到本次get()之间发生的所有事件，事件包括用户的按键，鼠标等操作
             if event.type == pygame.QUIT: #退出按钮
                 sys.exit()
-            elif event.type == pygame.KEYDOWN: #键盘按键
-                if event.key == pygame.K_RIGHT: #键盘的方向键右键
-                    self.ship.rect.x += 1 #ship的矩形坐标右移
-            
+            elif event.type == pygame.KEYDOWN: #有键盘按键按下
+                if event.key == pygame.K_RIGHT: #具体的键是方向右键
+                    self.ship.moving_right = True #这里只设置状态，而不直接设置坐标
+                if event.key == pygame.K_LEFT: 
+                    self.ship.moving_left = True 
+            elif event.type == pygame.KEYUP: #松开键盘按键
+                if event.key == pygame.K_RIGHT: #具体的键是方向右键
+                    self.ship.moving_right = False
+                if event.key == pygame.K_LEFT: 
+                    self.ship.moving_left = False 
+                    
     def _update_screen(self):
         self.screen.fill(self.settings.bg_color) #填充颜色到surface类型的screen对象
         self.ship.blitme() #绘制ship

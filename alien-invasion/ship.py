@@ -17,6 +17,17 @@ class Ship:
         #将图像和屏幕区域对齐，使图像位于屏幕底部正中间
         self.rect.midbottom = self.screen_rect.midbottom
         
+        #表示右移状态，使用此状态机可以支持持续按键移动
+        self.moving_right = False
+        self.moving_left = False
+        
     def blitme(self):
         #指定位置绘制图像
         self.screen.blit(self.image, self.rect)
+        
+    def update(self):
+        #根据右移状态调整ship位置
+        if self.moving_right:
+            self.rect.x += 1
+        if self.moving_left:
+            self.rect.x -= 1
