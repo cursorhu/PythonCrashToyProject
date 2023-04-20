@@ -17,15 +17,21 @@ class AlienInvasion:
         
     def run_game(self): #枚举的event检测去对surface对象刷新重绘或退出
         while True: #持续监听事件并处理
-            for event in pygame.event.get(): #获取从上次get()到本次get()之间发生的所有事件，事件包括用户的按键，鼠标等操作
+            self._check_events() #注意python的self是显式的，所以在类内调用方法也必须用self去调用，这一点和C++的隐式this支持直接调用类内方法不同
+            self._update_screen() #注意self.的调用方式已经隐式地将self传参到_check_events(), _update_screen()，不需要再显式传入self
+            
+    # 类内部的helper function通常加前缀下划线命名
+    # helper function只是为了将复杂的函数拆分重构，不是对外开放的方法，类似C++的static inline函数
+    def _check_events(self):
+        for event in pygame.event.get(): #获取从上次get()到本次get()之间发生的所有事件，事件包括用户的按键，鼠标等操作
                 if event.type == pygame.QUIT:
                     sys.exit()
-            
-            self.screen.fill(self.settings.bg_color) #填充颜色到surface类型的screen对象
-            self.ship.blitme() #绘制ship
-            
-            pygame.display.flip() #刷新窗口：重绘所有surface并覆盖旧的surface
-
+    
+    def _update_screen(self):
+        self.screen.fill(self.settings.bg_color) #填充颜色到surface类型的screen对象
+        self.ship.blitme() #绘制ship
+        pygame.display.flip() #刷新窗口：重绘所有surface并覆盖旧的surface
+    
 if __name__ == '__main__':
     ai = AlienInvasion()
     ai.run_game()
