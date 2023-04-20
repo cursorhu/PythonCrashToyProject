@@ -9,6 +9,7 @@ class Ship:
         #下面的类实例赋值语句可以近似理解为自动实现了类似C++的拷贝构造
         self.screen = ai_game.screen #Ship screen定义为game screen
         self.screen_rect = ai_game.screen.get_rect() #Ship screen的矩形区域定义为和game screen矩形区域相同的坐标
+        self.settings = ai_game.settings #使用game setting的成员
         
         #加载图像，获取其边界矩形坐标
         self.image = pygame.image.load('images/ship.bmp')
@@ -16,6 +17,9 @@ class Ship:
         
         #将图像和屏幕区域对齐，使图像位于屏幕底部正中间
         self.rect.midbottom = self.screen_rect.midbottom
+        
+        #支持小数倍速的移动：由于rect对象的x为整数，因此创建float x成员去支持小数坐标
+        self.x = float(self.rect.x)
         
         #表示右移状态，使用此状态机可以支持持续按键移动
         self.moving_right = False
@@ -27,7 +31,9 @@ class Ship:
         
     def update(self):
         #根据右移状态调整ship位置
-        if self.moving_right:
-            self.rect.x += 1
-        if self.moving_left:
-            self.rect.x -= 1
+        if self.moving_right and self.rect.right < self.screen_rect.right: #边界检测
+            self.x += self.settings.ship_speed #支持小数倍速的坐标移动
+        if self.moving_left and self.rect.left > 0:
+            self.x -= self.settings.ship_speed
+        #float的整数部分赋值给rect坐标. 由于按键按下会持续一段时间因此有倍速移动的效果
+        self.rect.x = self.x 
