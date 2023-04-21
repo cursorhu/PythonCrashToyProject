@@ -27,6 +27,8 @@ class AlienInvasion:
             self._check_events() #注意python的self是显式的，所以在类内调用方法也必须用self去调用，这一点和C++的隐式this支持直接调用类内方法不同
             self.ship.update() #根据ship的移动状态更新ship位置
             self._update_bullets()
+            self._update_aliens()
+            
             self._update_screen() #绘制屏幕的所有元素; 注意self.func()的调用方式隐式地将self作为参数传到func()
             
     # 类内部的helper function通常加前缀下划线命名
@@ -83,6 +85,10 @@ class AlienInvasion:
                 self.bullets.remove(bullet) #从列表中删除该成员
         #print(len(self.bullets)) #debug打印bullet个数：列表的长度即成员个数
     
+    def _update_aliens(self):
+        self._check_fleet_edge() #更新整个group位置
+        self.aliens.update() #对group中的每个alien对象调用其update()
+    
     def _create_fleet(self):
         alien = Alien(self) #只是为了计算边界和个数，不放入group
         alien_width, alien_height = alien.rect.size #size是元祖，包含横纵长度
@@ -108,6 +114,17 @@ class AlienInvasion:
         
         self.aliens.add(alien) #加入group
     
+    def _check_fleet_edge(self):
+        for alien in self.aliens.sprites():
+            if alien.check_edge(): #任意alien到达边缘就change_fleet_direction并break，因为游戏进行后alien被射击后是不规则的
+                self._change_fleet_direction()
+                break 
+        
+    def _change_fleet_direction(self):
+        for alien in self.aliens.sprites():
+            alien.rect.y += self.settings.fleet_drop_speed #整个alien group下移
+        self.settings.fleet_direction *= -1 #反向
+        
 if __name__ == '__main__':
     ai = AlienInvasion()
     ai.run_game()
