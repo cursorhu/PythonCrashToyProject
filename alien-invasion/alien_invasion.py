@@ -84,7 +84,11 @@ class AlienInvasion:
             if bullet.rect.bottom <= 0: #bullet底端超出game screen(纵坐标0)
                 self.bullets.remove(bullet) #从列表中删除该成员
         #print(len(self.bullets)) #debug打印bullet个数：列表的长度即成员个数
-    
+
+        #检测bullet和alien是否碰撞
+        #sprite.groupcollide将两个group的每个元素比较是否有位置碰撞，返回一个包含多个key-value的map字典，表示所有碰撞对象
+        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True) #参数1为key, 参数2为value, 参数3，4为True表示碰撞后删除参数1或者2的对象
+        
     def _update_aliens(self):
         self._check_fleet_edge() #更新整个group位置
         self.aliens.update() #对group中的每个alien对象调用其update()
