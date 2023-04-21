@@ -24,7 +24,7 @@ class AlienInvasion:
         while True: #持续监听事件并处理
             self._check_events() #注意python的self是显式的，所以在类内调用方法也必须用self去调用，这一点和C++的隐式this支持直接调用类内方法不同
             self.ship.update() #根据ship的移动状态更新ship位置
-            self.bullets.update() #更新所有bullet的位置; 对sprite.Group编组调用某方法，实际效果是对组内的每个Sprite对象调用该方法, Bullet ‘is-a’ Sprite对象，最终调用Bullet的update方法
+            self._update_bullets()
             self._update_screen() #绘制屏幕的所有元素; 注意self.func()的调用方式隐式地将self作为参数传到func()
             
     # 类内部的helper function通常加前缀下划线命名
@@ -41,8 +41,6 @@ class AlienInvasion:
     def _set_screen(self):
         if self.settings.full_screen:
             self.screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN) #窗口设置为从屏幕左上角到全屏右下角
-            #self.screen.screen_width = self.screen.get_rect().width
-            #self.screen.screen_height = self.screen.get_rect().height
         else: 
             self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height)) #窗口设置为指定大小
                
@@ -70,8 +68,16 @@ class AlienInvasion:
             self.ship.moving_left = False 
             
     def _fire_bullet(self):
-        new_bullet = Bullet(self) #创建bullet实例
-        self.bullets.add(new_bullet) #加入group    
+        if len(self.bullets) < self.settings.bullet_allowed:
+            new_bullet = Bullet(self) #创建bullet实例
+            self.bullets.add(new_bullet) #加入group    
+    
+    def _update_bullets(self):
+        self.bullets.update() #更新所有bullet的位置; 对sprite.Group编组调用某方法，实际效果是对组内的每个Sprite对象调用该方法, Bullet ‘is-a’ Sprite对象，最终调用Bullet的update方法    
+        for bullet in self.bullets.copy(): #不能在遍历的时候删除成员，所有copy列表来遍历，删除原列表的成员
+            if bullet.rect.bottom <= 0: #bullet底端超出game screen(纵坐标0)
+                self.bullets.remove(bullet) #从列表中删除该成员
+        #print(len(self.bullets)) #debug打印bullet个数：列表的长度即成员个数
     
 if __name__ == '__main__':
     ai = AlienInvasion()
