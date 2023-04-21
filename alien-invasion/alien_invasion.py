@@ -84,8 +84,29 @@ class AlienInvasion:
         #print(len(self.bullets)) #debug打印bullet个数：列表的长度即成员个数
     
     def _create_fleet(self):
-        alien = Alien(self)
-        self.aliens.add(alien)
+        alien = Alien(self) #只是为了计算边界和个数，不放入group
+        alien_width, alien_height = alien.rect.size #size是元祖，包含横纵长度
+        #计算一行能放多少个alien
+        available_space_x = self.settings.screen_width - (2 * alien_width) #左右各预留一个alien宽度
+        number_alien_x = available_space_x // (2 * alien_width) #各alien直接间隔一个alien宽度， //是整除，丢弃余数
+        #计算一列能放多少个alien
+        ship_height = self.ship.rect.height
+        available_space_y = self.settings.screen_height - (3 * alien_height) - ship_height #alien和ship距离多预留一点
+        number_alien_y = available_space_y // (2 * alien_height)
+        
+        for row_index in range(number_alien_y):
+            for alien_index in range(number_alien_x):
+                self._create_alien(alien_index, row_index)
+    
+    def _create_alien(self, alien_index, row_index):
+        alien = Alien(self) #要加入group的alien
+        #设置位置
+        alien_width, alien_height = alien.rect.size
+        alien.x = alien_width + 2 * alien_width * alien_index #number_alien_x从0开始
+        alien.rect.x = alien.x #设置rect的坐标
+        alien.rect.y = alien_height + 2 * alien_height * row_index
+        
+        self.aliens.add(alien) #加入group
     
 if __name__ == '__main__':
     ai = AlienInvasion()
