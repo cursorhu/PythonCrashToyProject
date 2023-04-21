@@ -6,7 +6,7 @@ class Ship:
     def __init__(self, ai_game):
         #将外部类的对象赋值给当前类的成员，目的是使当前类可以使用外部类的所有方法(本例为blit方法)
         #python的任意类成员的初始化都是直接赋值而不需要声明也不考虑类型；
-        #下面的类实例赋值语句可以近似理解为自动实现了类似C++的拷贝构造
+        #类实例的赋值语句可以近似理解为自动实现了类似C++的拷贝构造
         self.screen = ai_game.screen #Ship screen定义为game screen
         self.screen_rect = ai_game.screen.get_rect() #Ship screen的矩形区域定义为和game screen矩形区域相同的坐标
         self.settings = ai_game.settings #使用game setting的成员

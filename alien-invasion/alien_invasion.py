@@ -4,6 +4,7 @@ import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
+from alien import Alien
 
 class AlienInvasion:
     def __init__(self):
@@ -16,9 +17,10 @@ class AlienInvasion:
         pygame.display.set_caption("Alien Invasion")
         
         self.ship = Ship(self) #构造ship成员，传入参数是当前类，这样完成了两个类对象的互相关联
-        
         self.bullets = pygame.sprite.Group() #创建编组，用于管理bullet
+        self.aliens = pygame.sprite.Group()
         
+        self._create_fleet()
         
     def run_game(self): #枚举的event检测去对surface对象刷新重绘或退出
         while True: #持续监听事件并处理
@@ -49,6 +51,8 @@ class AlienInvasion:
         self.ship.blitme() #绘制ship
         for bullet in self.bullets.sprites(): #sprites方法返回列表，包含调用者group的所有bullet对象
             bullet.draw_bullet() #调用bullet实现的绘制方法
+        self.aliens.draw(self.screen) #绘制alien group的每一个alien到screen上
+        
         pygame.display.flip() #刷新窗口：重绘所有surface并覆盖旧的surface
      
     def _check_keydown_events(self, event):
@@ -78,6 +82,10 @@ class AlienInvasion:
             if bullet.rect.bottom <= 0: #bullet底端超出game screen(纵坐标0)
                 self.bullets.remove(bullet) #从列表中删除该成员
         #print(len(self.bullets)) #debug打印bullet个数：列表的长度即成员个数
+    
+    def _create_fleet(self):
+        alien = Alien(self)
+        self.aliens.add(alien)
     
 if __name__ == '__main__':
     ai = AlienInvasion()
