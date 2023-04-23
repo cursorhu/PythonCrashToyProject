@@ -29,10 +29,10 @@ class AlienInvasion:
     def run_game(self): #枚举的event检测去对surface对象刷新重绘或退出
         while True: #持续监听事件并处理
             self._check_events() #注意python的self是显式的，所以在类内调用方法也必须用self去调用，这一点和C++的隐式this支持直接调用类内方法不同
-            self.ship.update() #根据ship的移动状态更新ship位置
-            self._update_bullets()
-            self._update_aliens()
-            
+            if self.stats.game_active: #仅active状态才更新内容
+                self.ship.update() #根据ship的移动状态更新ship位置
+                self._update_bullets()
+                self._update_aliens()
             self._update_screen() #绘制屏幕的所有元素; 注意self.func()的调用方式隐式地将self作为参数传到func()
             
     # 类内部的helper function通常加前缀下划线命名
@@ -98,7 +98,9 @@ class AlienInvasion:
         self.aliens.update() #对group中的每个alien对象调用其update()
         #检测alien和ship是否碰撞
         if pygame.sprite.spritecollideany(self.ship, self.aliens):
-            self._ship_hit()
+            self._alien_hit_ship()
+        #检测alien是否到达底部
+        self._alien_reach_bottom()
         
     def _create_fleet(self):
         alien = Alien(self) #只是为了计算边界和个数，不放入group
@@ -136,14 +138,23 @@ class AlienInvasion:
             alien.rect.y += self.settings.fleet_drop_speed #整个alien group下移
         self.settings.fleet_direction *= -1 #反向
         
-    def _ship_hit(self):
-        self.aliens.empty() #清空group，注意这里不删除ship实例,只将ship_life -1
-        self.bullets.empty()
-        self.stats.ship_life -= 1
+    def _alien_hit_ship(self):
+        if self.stats.ship_life > 0:
+            self.stats.ship_life -= 1
+            self.aliens.empty() #清空group，注意这里不删除ship实例,只将ship_life -1
+            self.bullets.empty()
+            self._create_fleet() #重建alien
+            self.ship.center_ship() #重新设置ship位置，看上去好像重建了ship实例，实际没有
+            sleep(0.5)
+        else:
+            self.stats.game_active = False
         
-        self._create_fleet() #重建alien
-        self.ship.center_ship() #重新设置ship位置，看上去好像重建了ship实例，实际没有
-        sleep(0.5)
+    def _alien_reach_bottom(self):
+        for alien in self.aliens.sprites(): #获取sprite中每个成员
+            if alien.rect.bottom >= self.screen.get_rect().bottom:
+                self._alien_hit_ship() #处理方法相同
+                break #任意一个满足条件即退出for-loop
+    
     
 if __name__ == '__main__':
     ai = AlienInvasion()
