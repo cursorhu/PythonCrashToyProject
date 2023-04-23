@@ -7,7 +7,7 @@ from ship import Ship
 from bullet import Bullet
 from alien import Alien
 from game_stats import GameStats
-
+from button import Button
 
 class AlienInvasion:
     def __init__(self):
@@ -25,6 +25,9 @@ class AlienInvasion:
         self.aliens = pygame.sprite.Group()
         
         self._create_fleet()
+        
+        self.play_button = Button(self, "Play")
+        
         
     def run_game(self): #枚举的event检测去对surface对象刷新重绘或退出
         while True: #持续监听事件并处理
@@ -45,6 +48,9 @@ class AlienInvasion:
                 self._check_keydown_events(event)
             elif event.type == pygame.KEYUP: #松开键盘按键
                 self._check_keyup_events(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN: #鼠标按下
+                pos = pygame.mouse.get_pos()
+                self._check_mouse_events(pos)
     
     def _set_screen(self):
         if self.settings.full_screen:
@@ -58,6 +64,8 @@ class AlienInvasion:
         for bullet in self.bullets.sprites(): #sprites方法返回列表，包含调用者group的所有bullet对象
             bullet.draw_bullet() #调用bullet实现的绘制方法
         self.aliens.draw(self.screen) #绘制alien group的每一个alien到screen上
+        if not self.stats.game_active: #最上层的最后绘制
+            self.play_button.draw_button()
         
         pygame.display.flip() #刷新窗口：重绘所有surface并覆盖旧的surface
      
@@ -76,7 +84,15 @@ class AlienInvasion:
             self.ship.moving_right = False
         if event.key == pygame.K_LEFT: 
             self.ship.moving_left = False 
-            
+    
+    def _check_mouse_events(self, pos):
+        #鼠标点击的坐标和button区域有重合
+        if self.play_button.rect.collidepoint(pos) and not self.stats.game_active: 
+            self.stats.reset_stats()
+            self._reset_battle()
+            self.stats.game_active = True 
+            pygame.mouse.set_visible(False) #hide mouse when game is active      
+    
     def _fire_bullet(self):
         if len(self.bullets) < self.settings.bullet_allowed:
             new_bullet = Bullet(self) #创建bullet实例
@@ -141,13 +157,11 @@ class AlienInvasion:
     def _alien_hit_ship(self):
         if self.stats.ship_life > 0:
             self.stats.ship_life -= 1
-            self.aliens.empty() #清空group，注意这里不删除ship实例,只将ship_life -1
-            self.bullets.empty()
-            self._create_fleet() #重建alien
-            self.ship.center_ship() #重新设置ship位置，看上去好像重建了ship实例，实际没有
+            self._reset_battle()
             sleep(0.5)
         else:
             self.stats.game_active = False
+            pygame.mouse.set_visible(True)  #unhide mouse when game is inactive
         
     def _alien_reach_bottom(self):
         for alien in self.aliens.sprites(): #获取sprite中每个成员
@@ -155,7 +169,12 @@ class AlienInvasion:
                 self._alien_hit_ship() #处理方法相同
                 break #任意一个满足条件即退出for-loop
     
-    
+    def _reset_battle(self): #重置战场以复位alien和ship初始位置
+        self.aliens.empty() #清空group，注意这里不删除ship实例,只将ship_life -1
+        self.bullets.empty()
+        self._create_fleet() #重建alien
+        self.ship.center_ship() #重新设置ship位置，看上去好像重建了ship实例，实际没有
+        
 if __name__ == '__main__':
     ai = AlienInvasion()
     ai.run_game()

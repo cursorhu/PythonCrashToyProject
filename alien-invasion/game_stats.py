@@ -6,6 +6,6 @@ class GameStats:
         self.reset_stats()
 
     def reset_stats(self):
-        self.game_active = True
+        self.game_active = False
         self.ship_life = self.settings.ship_life
         
