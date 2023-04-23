@@ -1,20 +1,24 @@
 import sys
 import pygame
 
+from time import sleep
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
+from game_stats import GameStats
+
 
 class AlienInvasion:
     def __init__(self):
         pygame.init() #初始化pygame实例
         
-        #初始化AlienInvasion的成员
+        #初始化成员
         self.settings = Settings() #构造Settings类型的成员
         self._set_screen() #设置游戏窗口
-        
         pygame.display.set_caption("Alien Invasion")
+        
+        self.stats = GameStats(self)
         
         self.ship = Ship(self) #构造ship成员，传入参数是当前类，这样完成了两个类对象的互相关联
         self.bullets = pygame.sprite.Group() #创建编组，用于管理bullet
@@ -92,7 +96,10 @@ class AlienInvasion:
     def _update_aliens(self):
         self._check_fleet_edge() #更新整个group位置
         self.aliens.update() #对group中的每个alien对象调用其update()
-    
+        #检测alien和ship是否碰撞
+        if pygame.sprite.spritecollideany(self.ship, self.aliens):
+            self._ship_hit()
+        
     def _create_fleet(self):
         alien = Alien(self) #只是为了计算边界和个数，不放入group
         alien_width, alien_height = alien.rect.size #size是元祖，包含横纵长度
@@ -129,6 +136,15 @@ class AlienInvasion:
             alien.rect.y += self.settings.fleet_drop_speed #整个alien group下移
         self.settings.fleet_direction *= -1 #反向
         
+    def _ship_hit(self):
+        self.aliens.empty() #清空group，注意这里不删除ship实例,只将ship_life -1
+        self.bullets.empty()
+        self.stats.ship_life -= 1
+        
+        self._create_fleet() #重建alien
+        self.ship.center_ship() #重新设置ship位置，看上去好像重建了ship实例，实际没有
+        sleep(0.5)
+    
 if __name__ == '__main__':
     ai = AlienInvasion()
     ai.run_game()

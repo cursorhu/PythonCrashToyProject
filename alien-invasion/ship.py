@@ -37,3 +37,9 @@ class Ship:
             self.x -= self.settings.ship_speed
         #float的整数部分赋值给rect坐标. 由于按键按下会持续一段时间因此有倍速移动的效果
         self.rect.x = self.x 
+        
+    def center_ship(self): #撞击复位ship时使用
+        #将图像和屏幕区域对齐，使图像位于屏幕底部正中间
+        self.rect.midbottom = self.screen_rect.midbottom
+        #支持小数倍速的移动：由于rect对象的x为整数，因此创建float x成员去支持小数坐标
+        self.x = float(self.rect.x)
