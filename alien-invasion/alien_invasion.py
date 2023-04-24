@@ -22,11 +22,10 @@ class AlienInvasion:
         self.stats = GameStats(self)
         self.scoreboard = Scoreboard(self)
         
-        self.ship = Ship(self) #构造ship成员，传入参数是当前类，这样完成了两个类对象的互相关联
-        self.bullets = pygame.sprite.Group() #创建编组，用于管理bullet
-        self.aliens = pygame.sprite.Group()
-        
-        self._create_fleet()
+        self.ship = Ship(self) #构造ship成员；传入参数是当前类是为了完成两个类互相关联，可调用对方类的方法
+        self.aliens = pygame.sprite.Group() #创建一组alien，sprite.Group等同于python自带的列表数组类，支持碰撞检测等游戏专用方法
+        self._create_fleet() 
+        self.bullets = pygame.sprite.Group() #创建一组bullet，_fire_bullet创建具体实例
         
         self.play_button = Button(self, "Play")
         
@@ -91,14 +90,15 @@ class AlienInvasion:
     
     def _check_mouse_events(self, pos):
         #点击Play：鼠标点击坐标和button区域有重合
-        if self.play_button.rect.collidepoint(pos) and not self.stats.game_active: 
+        clickplay = self.play_button.rect.collidepoint(pos)
+        if clickplay and not self.stats.game_active: 
             self.stats.reset_stats()
             self._reset_battle()
             self.settings.init_play_settings()
-            self.scoreboard.prep_score()
+            self.scoreboard.prep_score() #show score/level/shiplife
             self.scoreboard.prep_level()
-            self.scoreboard.prep_ships()
-            self.stats.game_active = True 
+            self.scoreboard.prep_ships() 
+            self.stats.game_active = True #enable game
             pygame.mouse.set_visible(False) #hide mouse when game is active      
     
     def _fire_bullet(self):
@@ -107,7 +107,8 @@ class AlienInvasion:
             self.bullets.add(new_bullet) #加入group    
     
     def _update_bullets(self):
-        self.bullets.update() #更新所有bullet的位置; 对sprite.Group编组调用某方法，实际效果是对组内的每个Sprite对象调用该方法, Bullet ‘is-a’ Sprite对象，最终调用Bullet的update方法    
+        #更新所有bullet的位置;
+        self.bullets.update() #对sprite.Group编组调用某方法，实际效果是对组内的每个Sprite对象调用该方法, Bullet ‘is-a’ Sprite对象，最终调用Bullet的update方法    
         for bullet in self.bullets.copy(): #不能在遍历的时候删除成员，所有copy列表来遍历，删除原列表的成员
             if bullet.rect.bottom <= 0: #bullet底端超出game screen(纵坐标0)
                 self.bullets.remove(bullet) #从列表中删除该成员
@@ -121,24 +122,27 @@ class AlienInvasion:
         #sprite.groupcollide将两个group的每个元素比较是否有位置碰撞，返回一个包含多个key-value的map字典，表示所有碰撞对象
         #参数1为key, 参数2为value, 参数3，4为True表示碰撞后删除参数1或者2的对象
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
-
         if collisions: #key-value类型
-            for aliens in collisions.values():
-                self.stats.score += self.settings.alien_points * len(aliens)
-            self.scoreboard.prep_score()
-            self.scoreboard.check_high_score()
+            self._update_score(collisions)
 
-        #所有Alien已摧毁
+        #当所有Alien都被摧毁，升级到下一关
         if not self.aliens:
-            # Destroy existing bullets and create new fleet.
-            self.bullets.empty()
-            self._create_fleet()
+            self._update_level()
             
-            # Increase level.
-            self.stats.level += 1
-            self.scoreboard.prep_level()
-            self.settings.increase_speed()
-            
+    def _update_level(self):
+        # Increase game level and speed.
+        self.stats.level += 1
+        self.scoreboard.prep_level()
+        self.settings.increase_speed()
+        # Reset battle for next game level.
+        self._reset_battle()        
+    
+    def _update_score(self, collisions):
+        for aliens in collisions.values():
+            self.stats.score += self.settings.alien_points * len(aliens)
+        self.scoreboard.prep_score()
+        self.scoreboard.check_high_score()
+    
     def _update_aliens(self):
         self._check_fleet_edge() #更新整个group位置
         self.aliens.update() #对group中的每个alien对象调用其update()

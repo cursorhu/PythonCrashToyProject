@@ -6,6 +6,7 @@ class Settings:
         self.init_play_settings()
         
     def _init_static_setting(self):
+        """Initialize settings that is static."""
         #默认窗口设置
         self.screen_width = 1200
         self.screen_height = 800
