@@ -2,8 +2,11 @@ import pygame
 #pygame能以矩形对象处理游戏中的图像元素，矩形大小和坐标可以表达该图像元素在整个屏幕中的位置
 #矩形坐标的值是以坐上角为原点：窗口左上角为(0,0)，右下角为最大值(1200,800)，和QT/MFC的GUI框架一样
 #用矩形表示任意形状的对象，可以方便地实现碰撞检测，边界检测等
-class Ship:
+from pygame.sprite import Sprite
+
+class Ship(Sprite):
     def __init__(self, ai_game):
+        super().__init__() #初始化父类Sprite
         #将外部类的对象赋值给当前类的成员，目的是使当前类可以使用外部类的所有方法(本例为blit方法)
         #python的任意类成员的初始化都是直接赋值而不需要声明也不考虑类型；
         #类实例的赋值语句可以近似理解为自动实现了类似C++的拷贝构造

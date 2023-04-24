@@ -8,6 +8,7 @@ from bullet import Bullet
 from alien import Alien
 from game_stats import GameStats
 from button import Button
+from scoreboard import Scoreboard
 
 class AlienInvasion:
     def __init__(self):
@@ -19,6 +20,7 @@ class AlienInvasion:
         pygame.display.set_caption("Alien Invasion")
         
         self.stats = GameStats(self)
+        self.scoreboard = Scoreboard(self)
         
         self.ship = Ship(self) #构造ship成员，传入参数是当前类，这样完成了两个类对象的互相关联
         self.bullets = pygame.sprite.Group() #创建编组，用于管理bullet
@@ -64,7 +66,9 @@ class AlienInvasion:
         for bullet in self.bullets.sprites(): #sprites方法返回列表，包含调用者group的所有bullet对象
             bullet.draw_bullet() #调用bullet实现的绘制方法
         self.aliens.draw(self.screen) #绘制alien group的每一个alien到screen上
-        if not self.stats.game_active: #最上层的最后绘制
+        self.scoreboard.show_score()
+        
+        if not self.stats.game_active: #最后绘制最上层的Play button
             self.play_button.draw_button()
         
         pygame.display.flip() #刷新窗口：重绘所有surface并覆盖旧的surface
@@ -86,10 +90,14 @@ class AlienInvasion:
             self.ship.moving_left = False 
     
     def _check_mouse_events(self, pos):
-        #鼠标点击的坐标和button区域有重合
+        #点击Play：鼠标点击坐标和button区域有重合
         if self.play_button.rect.collidepoint(pos) and not self.stats.game_active: 
             self.stats.reset_stats()
             self._reset_battle()
+            self.settings.init_play_settings()
+            self.scoreboard.prep_score()
+            self.scoreboard.prep_level()
+            self.scoreboard.prep_ships()
             self.stats.game_active = True 
             pygame.mouse.set_visible(False) #hide mouse when game is active      
     
@@ -106,9 +114,31 @@ class AlienInvasion:
         #print(len(self.bullets)) #debug打印bullet个数：列表的长度即成员个数
 
         #检测bullet和alien是否碰撞
+        self._check_bullet_alien_collisions()
+    
+    def _check_bullet_alien_collisions(self):
+        """Respond to bullet-alien collisions."""
         #sprite.groupcollide将两个group的每个元素比较是否有位置碰撞，返回一个包含多个key-value的map字典，表示所有碰撞对象
-        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True) #参数1为key, 参数2为value, 参数3，4为True表示碰撞后删除参数1或者2的对象
-        
+        #参数1为key, 参数2为value, 参数3，4为True表示碰撞后删除参数1或者2的对象
+        collisions = pygame.sprite.groupcollide(self.bullets, self.aliens, True, True)
+
+        if collisions: #key-value类型
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+            self.scoreboard.prep_score()
+            self.scoreboard.check_high_score()
+
+        #所有Alien已摧毁
+        if not self.aliens:
+            # Destroy existing bullets and create new fleet.
+            self.bullets.empty()
+            self._create_fleet()
+            
+            # Increase level.
+            self.stats.level += 1
+            self.scoreboard.prep_level()
+            self.settings.increase_speed()
+            
     def _update_aliens(self):
         self._check_fleet_edge() #更新整个group位置
         self.aliens.update() #对group中的每个alien对象调用其update()
@@ -156,7 +186,8 @@ class AlienInvasion:
         
     def _alien_hit_ship(self):
         if self.stats.ship_life > 0:
-            self.stats.ship_life -= 1
+            self.stats.ship_life -= 1 #注意这里不删除ship实例,只将ship_life -1
+            self.scoreboard.prep_ships() #更新计数板
             self._reset_battle()
             sleep(0.5)
         else:
@@ -170,7 +201,7 @@ class AlienInvasion:
                 break #任意一个满足条件即退出for-loop
     
     def _reset_battle(self): #重置战场以复位alien和ship初始位置
-        self.aliens.empty() #清空group，注意这里不删除ship实例,只将ship_life -1
+        self.aliens.empty() #清空group
         self.bullets.empty()
         self._create_fleet() #重建alien
         self.ship.center_ship() #重新设置ship位置，看上去好像重建了ship实例，实际没有
